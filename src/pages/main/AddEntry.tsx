@@ -4,13 +4,22 @@ import { db } from "../../lib/firebase";
 import { collection, doc, setDoc } from "firebase/firestore";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import {
+  Calendar,
+  Weight,
+  Footprints,
+  Droplet,
+  Candy,
+  Soup,
+  BookText,
+} from "lucide-react";
 
 const AddEntry = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const today = new Date().toISOString().split("T")[0];
 
-  // State declarations for all form fields
+  // State declarations
   const [date, setDate] = useState(today);
   const [weightKg, setWeightKg] = useState<number | "">("");
   const [steps, setSteps] = useState<number | "">("");
@@ -20,6 +29,7 @@ const AddEntry = () => {
   const [dailySummary, setDailySummary] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Constants for select options and suggestions
   const SUGAR_LEVELS = [
     { value: "no_sugar", label: "No Sugar" },
     { value: "very_low", label: "Very Low" },
@@ -55,7 +65,7 @@ const AddEntry = () => {
     high: "High intake. Assuming multiple meals or snacks were oily/junk food. Consider reducing fast food and processed snacks.",
     very_high: "Very high intake. Assuming most of your meals were oily/junk food. This can negatively impact your health.",
   };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -92,169 +102,131 @@ const AddEntry = () => {
     }
   };
 
+  const IconWrapper = ({ children }: { children: React.ReactNode }) => (
+    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      {children}
+    </div>
+  );
+
   return (
-    <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Add Daily Log</h1>
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-lg shadow-md max-w-lg mx-auto"
-      >
-        <div className="space-y-6">
-          {/* Date */}
-          <div>
-            <label
-              htmlFor="date"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Date
-            </label>
+    <div className="p-4 md:p-8 bg-gray-100 min-h-screen">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Add Daily Log</h1>
+        <p className="text-gray-600 mb-8">Log your activities and diet for the day.</p>
+
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white p-8 rounded-2xl shadow-lg space-y-8"
+        >
+          {/* General Section */}
+          <div className="relative">
+            <IconWrapper><Calendar className="text-gray-400" /></IconWrapper>
             <input
               type="date"
               id="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="pl-10 pr-4 py-3 block w-full border-2 border-gray-500 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 sm:text-sm"
             />
           </div>
 
-          {/* Weight */}
-          <div>
-            <label
-              htmlFor="weight"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Weight (kg)
-            </label>
-            <input
-              type="number"
-              id="weight"
-              value={weightKg}
-              onChange={(e) => setWeightKg(e.target.value === '' ? '' : parseFloat(e.target.value))}
-              className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="e.g., 75.5"
-            />
-          </div>
-
-          {/* Steps */}
-          <div>
-            <label
-              htmlFor="steps"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Steps
-            </label>
-            <input
-              type="number"
-              id="steps"
-              value={steps}
-              onChange={(e) => setSteps(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-              className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="e.g., 10000"
-            />
-          </div>
-
-          {/* Sugar Reading */}
-          <div>
-            <label
-              htmlFor="sugarReading"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Sugar Reading (mg/dL)
-            </label>
-            <input
-              type="number"
-              id="sugarReading"
-              value={sugarReading}
-              onChange={(e) => setSugarReading(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-              className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="e.g., 90"
-            />
-          </div>
+          {/* Activity Section */}
+          <fieldset className="border-t border-gray-200 pt-6">
+            <legend className="text-lg font-semibold text-gray-800 px-2 -ml-2">Activity</legend>
+            <div className="space-y-6 mt-4">
+              <div className="relative">
+                <IconWrapper><Weight className="text-gray-400" /></IconWrapper>
+                <input
+                  type="number"
+                  id="weight"
+                  value={weightKg}
+                  onChange={(e) => setWeightKg(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                  className="pl-10 pr-4 py-3 w-full border-2 border-gray-500 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 sm:text-sm"
+                  placeholder="Weight (kg)"
+                />
+              </div>
+              <div className="relative">
+                <IconWrapper><Footprints className="text-gray-400" /></IconWrapper>
+                <input
+                  type="number"
+                  id="steps"
+                  value={steps}
+                  onChange={(e) => setSteps(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                  className="pl-10 pr-4 py-3 w-full border-2 border-gray-500 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 sm:text-sm"
+                  placeholder="Steps taken"
+                />
+              </div>
+            </div>
+          </fieldset>
           
-          {/* Sugar Level Select */}
-          <div>
-            <label
-              htmlFor="sugarLevel"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Consumed sugary food/drinks level?
-            </label>
-            <select
-              id="sugarLevel"
-              value={sugarLevel}
-              onChange={(e) => setSugarLevel(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            >
-              {SUGAR_LEVELS.map((level) => (
-                <option key={level.value} value={level.value}>
-                  {level.label}
-                </option>
-              ))}
-            </select>
-            {sugarLevel && SUGGESTIONS[sugarLevel] && (
-              <p className="mt-2 text-sm text-gray-600">
-                {SUGGESTIONS[sugarLevel]}
-              </p>
-            )}
-          </div>
+          {/* Diet Section */}
+          <fieldset className="border-t border-gray-200 pt-6">
+            <legend className="text-lg font-semibold text-gray-800 px-2 -ml-2">Diet</legend>
+            <div className="space-y-6 mt-4">
+              <div className="relative">
+                <IconWrapper><Droplet className="text-gray-400" /></IconWrapper>
+                <input
+                  type="number"
+                  id="sugarReading"
+                  value={sugarReading}
+                  onChange={(e) => setSugarReading(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                  className="pl-10 pr-4 py-3 w-full border-2 border-gray-500 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 sm:text-sm"
+                  placeholder="Sugar Reading (mg/dL)"
+                />
+              </div>
+              <div className="relative">
+                <IconWrapper><Candy className="text-gray-400" /></IconWrapper>
+                <select
+                  id="sugarLevel"
+                  value={sugarLevel}
+                  onChange={(e) => setSugarLevel(e.target.value)}
+                  className="pl-10 pr-4 py-3 block w-full border-2 border-gray-500 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 sm:text-sm"
+                >
+                  {SUGAR_LEVELS.map((level) => <option key={level.value} value={level.value}>{level.label}</option>)}
+                </select>
+              </div>
+              <div className="relative">
+                <IconWrapper><Soup className="text-gray-400" /></IconWrapper>
+                <select
+                  id="oilyFoodLevel"
+                  value={oilyFoodLevel}
+                  onChange={(e) => setOilyFoodLevel(e.target.value)}
+                  className="pl-10 pr-4 py-3 block w-full border-2 border-gray-500 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 sm:text-sm"
+                >
+                  {OILY_FOOD_LEVELS.map((level) => <option key={level.value} value={level.value}>{level.label}</option>)}
+                </select>
+              </div>
+            </div>
+          </fieldset>
 
-          {/* Oily Food Level Select */}
-          <div>
-            <label
-              htmlFor="oilyFoodLevel"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Junk/Oily Food Intake
-            </label>
-            <select
-              id="oilyFoodLevel"
-              value={oilyFoodLevel}
-              onChange={(e) => setOilyFoodLevel(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            >
-              {OILY_FOOD_LEVELS.map((level) => (
-                <option key={level.value} value={level.value}>
-                  {level.label}
-                </option>
-              ))}
-            </select>
-            {oilyFoodLevel && OILY_FOOD_SUGGESTIONS[oilyFoodLevel] && (
-              <p className="mt-2 text-sm text-gray-600">
-                {OILY_FOOD_SUGGESTIONS[oilyFoodLevel]}
-              </p>
-            )}
-          </div>
-
-          {/* Daily Summary */}
-          <div>
-            <label
-              htmlFor="summary"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Daily Summary (optional)
-            </label>
-            <textarea
-              id="summary"
-              rows={3}
-              value={dailySummary}
-              onChange={(e) => setDailySummary(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="Any notes about your day?"
-            ></textarea>
-          </div>
+          {/* Summary Section */}
+          <fieldset className="border-t border-gray-200 pt-6">
+             <legend className="text-lg font-semibold text-gray-800 px-2 -ml-2">Summary</legend>
+            <div className="relative mt-4">
+              <IconWrapper><BookText className="text-gray-400" /></IconWrapper>
+              <textarea
+                id="summary"
+                rows={4}
+                value={dailySummary}
+                onChange={(e) => setDailySummary(e.target.value)}
+                className="pl-10 pr-4 py-3 block w-full border-2 border-gray-500 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 sm:text-sm"
+                placeholder="Any notes about your day?"
+              ></textarea>
+            </div>
+          </fieldset>
 
           {/* Submit Button */}
           <div>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 transition-colors"
             >
-              {isSubmitting ? "Saving..." : "Save Log"}
+              {isSubmitting ? "Saving..." : "Save Daily Log"}
             </button>
           </div>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };
