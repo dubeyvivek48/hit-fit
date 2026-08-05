@@ -1,121 +1,206 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { db } from '@/lib/firebase';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { DailyLog, UserProfile } from '@/lib/tips';
-import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line } from 'recharts';
-import { format, subDays } from 'date-fns';
+import { useEffect, useState } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { useAuth } from "../../contexts/AuthContext";
+import { db } from "../../lib/firebase";
+import { collection, getDocs, orderBy, query, limit } from "firebase/firestore";
 
-type TimeFrame = 7 | 30;
+interface DailyLog {
+  date: string;
+  weightKg: number;
+  steps: number;
+  oilyFoodPercent: number;
+}
 
 const Analytics = () => {
-    const { user, userProfile } = useAuth();
-    const [data, setData] = useState<DailyLog[]>([]);
-    const [timeFrame, setTimeFrame] = useState<TimeFrame>(7);
-    const [loading, setLoading] = useState(true);
-    const [correlationInsight, setCorrelationInsight] = useState('');
+  const { user } = useAuth();
+  const [data, setData] = useState<DailyLog[]>([]);
+  const [timeRange, setTimeRange] = useState<"7" | "30">("7");
+  const [correlationInsight, setCorrelationInsight] = useState<string>("");
 
-    useEffect(() => {
-        if (user) {
-            const fetchData = async () => {
-                setLoading(true);
-                const endDate = format(new Date(), 'yyyy-MM-dd');
-                const startDate = format(subDays(new Date(), timeFrame - 1), 'yyyy-MM-dd');
-                
-                const logsCollection = collection(db, 'users', user.uid, 'daily_logs');
-                const q = query(logsCollection, orderBy('date', 'asc'));
-                
-                const querySnapshot = await getDocs(q);
-                const logs = querySnapshot.docs.map(doc => doc.data() as DailyLog).filter(log => log.date >= startDate && log.date <= endDate);
-                setData(logs);
-                setLoading(false);
-            };
-            fetchData();
-        }
-    }, [user, timeFrame]);
-    
-    useEffect(() => {
-        if (data.length > 1) {
-            setCorrelationInsight(calculateCorrelation(data, userProfile));
-        } else {
-            setCorrelationInsight('Not enough data to find correlations. Keep logging!');
-        }
-    }, [data, userProfile]);
+  useEffect(() => {
+    if (user) {
+      fetchData();
+    }
+  }, [user, timeRange]);
 
-    const calculateCorrelation = (logs: DailyLog[], profile: UserProfile | null): string => {
-        if (!profile) return '';
+  const fetchData = async () => {
+    if (!user) return;
 
-        const weightChanges = logs.slice(1).map((log, i) => log.weightKg - logs[i].weightKg);
-        const avgSteps = logs.map(l => l.steps).reduce((a, b) => a + b, 0) / logs.length;
-        const avgOilyFood = logs.map(l => l.oilyFoodPercent).reduce((a, b) => a + b, 0) / logs.length;
-
-        let scoreSteps = 0;
-        let scoreOily = 0;
-
-        weightChanges.forEach((change, i) => {
-            const stepChange = logs[i+1].steps > avgSteps;
-            const oilyChange = logs[i+1].oilyFoodPercent < avgOilyFood;
-
-            if (profile.goal === 'weight_loss') {
-                if (change < 0) { // Weight loss
-                    if (stepChange) scoreSteps++;
-                    if (oilyChange) scoreOily++;
-                }
-            } else { // Weight gain
-                if (change > 0) { // Weight gain
-                    if (!stepChange) scoreSteps++; // Less steps might mean less cardio
-                    if (!oilyChange) scoreOily++; // This is tricky, but let's assume higher intake helps
-                }
-            }
-        });
-
-        if (scoreSteps > scoreOily) {
-            return `Higher step counts seem to be positively impacting your ${profile.goal.replace('_', ' ')} goal. Keep it up!`;
-        } else if (scoreOily > scoreSteps) {
-            return `Managing your oily food intake appears to be a key factor for your ${profile.goal.replace('_', ' ')} progress.`;
-        }
-        return "Your progress seems steady. Let's gather more data to find clear correlations.";
-    };
-
-
-    return (
-        <div className="space-y-6">
-            <h1 className="text-3xl font-bold">Your Analytics</h1>
-            <div className="flex justify-center space-x-2">
-                <button onClick={() => setTimeFrame(7)} className={`px-4 py-2 rounded-md font-semibold ${timeFrame === 7 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>7 Days</button>
-                <button onClick={() => setTimeFrame(30)} className={`px-4 py-2 rounded-md font-semibold ${timeFrame === 30 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>30 Days</button>
-            </div>
-            
-            {/* Chart */}
-            <div className="bg-white p-2 md:p-6 rounded-lg shadow-md h-96">
-                {loading ? <div className="text-center p-10">Loading chart...</div> :
-                 data.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="date" tickFormatter={(tick) => format(new Date(tick), 'MMM d')} />
-                            <YAxis yAxisId="left" label={{ value: 'Weight (kg)', angle: -90, position: 'insideLeft' }} />
-                            <YAxis yAxisId="right" orientation="right" label={{ value: 'Steps / Oil %', angle: 90, position: 'insideRight' }}/>
-                            <Tooltip />
-                            <Legend />
-                            <Line yAxisId="left" type="monotone" dataKey="weightKg" stroke="#8884d8" strokeWidth={2} name="Weight (kg)" />
-                            <Line yAxisId="right" type="monotone" dataKey="steps" stroke="#82ca9d" name="Steps" />
-                            <Line yAxisId="right" type="monotone" dataKey="oilyFoodPercent" stroke="#ffc658" name="Oily Food %" />
-                        </LineChart>
-                    </ResponsiveContainer>
-                 ) : (
-                    <p className="text-center p-10 text-gray-600">No data available for this period. Start logging to see your progress!</p>
-                 )
-                }
-            </div>
-
-            {/* Correlation Insight */}
-            <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-lg shadow-md">
-                 <p className="font-bold">Correlation Insight</p>
-                 <p>{correlationInsight}</p>
-            </div>
-        </div>
+    const logsCollection = collection(db, `users/${user.uid}/daily_logs`);
+    const q = query(
+      logsCollection,
+      orderBy("date", "desc"),
+      limit(parseInt(timeRange)),
     );
+
+    const querySnapshot = await getDocs(q);
+    const logs = querySnapshot.docs
+      .map((doc) => doc.data() as DailyLog)
+      .reverse();
+    setData(logs);
+    generateCorrelationInsight(logs);
+  };
+
+  const calculateCorrelation = (
+    data: DailyLog[],
+    key1: keyof DailyLog,
+    key2: keyof DailyLog,
+  ) => {
+    if (data.length < 2) return 0;
+
+    const n = data.length;
+    const sum1 = data.reduce((acc, val) => acc + (val[key1] as number), 0);
+    const sum2 = data.reduce((acc, val) => acc + (val[key2] as number), 0);
+    const sum1Sq = data.reduce(
+      (acc, val) => acc + (val[key1] as number) ** 2,
+      0,
+    );
+    const sum2Sq = data.reduce(
+      (acc, val) => acc + (val[key2] as number) ** 2,
+      0,
+    );
+    const pSum = data.reduce(
+      (acc, val) => acc + (val[key1] as number) * (val[key2] as number),
+      0,
+    );
+
+    const numerator = n * pSum - sum1 * sum2;
+    const denominator = Math.sqrt(
+      (n * sum1Sq - sum1 ** 2) * (n * sum2Sq - sum2 ** 2),
+    );
+
+    if (denominator === 0) return 0;
+
+    return numerator / denominator;
+  };
+
+  const generateCorrelationInsight = (logs: DailyLog[]) => {
+    if (logs.length < 2) {
+      setCorrelationInsight("Not enough data to generate insights.");
+      return;
+    }
+
+    const weightStepsCorrelation = calculateCorrelation(
+      logs,
+      "weightKg",
+      "steps",
+    );
+    const weightOilyFoodCorrelation = calculateCorrelation(
+      logs,
+      "weightKg",
+      "oilyFoodPercent",
+    );
+
+    let insight = "Correlation Insights:";
+    if (Math.abs(weightStepsCorrelation) > 0.5) {
+      insight += `- There is a **${
+        weightStepsCorrelation > 0 ? "positive" : "negative"
+      }** correlation between your weight and steps. `;
+    }
+    if (Math.abs(weightOilyFoodCorrelation) > 0.5) {
+      insight += `- There is a **${
+        weightOilyFoodCorrelation > 0 ? "positive" : "negative"
+      }** correlation between your weight and oily food intake.`;
+    }
+
+    if (
+      Math.abs(weightStepsCorrelation) < 0.5 &&
+      Math.abs(weightOilyFoodCorrelation) < 0.5
+    ) {
+      insight =
+        "Keep logging your data to see how your habits impact your weight.";
+    }
+
+    setCorrelationInsight(insight);
+  };
+
+  return (
+    <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
+      <h1 className="text-2xl font-bold text-gray-800 mb-4">Analytics</h1>
+
+      <div className="flex justify-center mb-4 space-x-2">
+        <button
+          onClick={() => setTimeRange("7")}
+          className={`px-4 py-2 rounded-md text-sm font-medium ${
+            timeRange === "7"
+              ? "bg-blue-600 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-100"
+          }`}
+        >
+          Last 7 Days
+        </button>
+        <button
+          onClick={() => setTimeRange("30")}
+          className={`px-4 py-2 rounded-md text-sm font-medium ${
+            timeRange === "30"
+              ? "bg-blue-600 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-100"
+          }`}
+        >
+          Last 30 Days
+        </button>
+      </div>
+
+      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+        <h2 className="text-lg font-semibold text-gray-700 mb-2">
+          Progress Chart
+        </h2>
+        <ResponsiveContainer width="100%" height={400}>
+          <LineChart
+            data={data}
+            margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis yAxisId="left" stroke="#8884d8" />
+            <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
+            <Tooltip />
+            <Legend />
+            <Line
+              yAxisId="left"
+              type="monotone"
+              dataKey="weightKg"
+              stroke="#8884d8"
+              name="Weight (kg)"
+              activeDot={{ r: 8 }}
+            />
+            <Line
+              yAxisId="right"
+              type="monotone"
+              dataKey="steps"
+              stroke="#82ca9d"
+              name="Steps"
+            />
+            <Line
+              yAxisId="right"
+              type="monotone"
+              dataKey="oilyFoodPercent"
+              stroke="#ffc658"
+              name="Oily Food (%)"
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="bg-white p-4 rounded-lg shadow-md">
+        <h2 className="text-lg font-semibold text-gray-700 mb-2">
+          Correlation Insights
+        </h2>
+        <p className="text-gray-600 whitespace-pre-line">
+          {correlationInsight}
+        </p>
+      </div>
+    </div>
+  );
 };
 
 export default Analytics;

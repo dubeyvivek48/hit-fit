@@ -1,30 +1,66 @@
-import { Routes, Route } from 'react-router-dom';
-import Login from './pages/auth/Login';
-import Home from './pages/main/Home';
-import AddEntry from './pages/main/AddEntry';
-import Analytics from './pages/main/Analytics';
-import Settings from './pages/main/Settings';
-import ProtectedRoute from './components/ProtectedRoute';
-import Layout from './components/Layout';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import { Toaster } from "react-hot-toast";
+
+import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+import Home from "./pages/main/Home";
+import AddEntry from "./pages/main/AddEntry";
+import Analytics from "./pages/main/Analytics";
+import Settings from "./pages/main/Settings";
+import Login from "./pages/auth/Login";
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route 
-        path="/" 
-        element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Home />} />
-        <Route path="add" element={<AddEntry />} />
-        <Route path="analytics" element={<Analytics />} />
-        <Route path="settings" element={<Settings />} />
-      </Route>
-    </Routes>
+    <AuthProvider>
+      <Router>
+        <Toaster position="bottom-center" />
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Home />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-entry"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AddEntry />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Analytics />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Settings />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

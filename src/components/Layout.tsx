@@ -1,12 +1,14 @@
-import { Outlet } from 'react-router-dom';
-import BottomNav from './BottomNav';
+import { ReactNode } from "react";
+import BottomNav from "./BottomNav";
 
-const Layout = () => {
+interface LayoutProps {
+  children: ReactNode;
+}
+
+const Layout = ({ children }: LayoutProps) => {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="container mx-auto p-4">
-        <Outlet />
-      </main>
+    <div className="flex flex-col min-h-screen">
+      <main className="flex-grow pb-16">{children}</main>
       <BottomNav />
     </div>
   );

@@ -1,73 +1,138 @@
-export interface DailyLog {
-    date: string;
-    weightKg: number;
-    steps: number;
-    sugarTaken: boolean;
-    oilyFoodPercent: number;
-    dailySummary: string;
-    createdAt: string;
+export interface Tip {
+  id: string;
+  category: "weight_loss" | "weight_gain";
+  text: string;
+  condition?: (log: any) => boolean;
 }
 
-export type UserGoal = "weight_loss" | "weight_gain";
+export const tips: Tip[] = [
+  // Weight Loss Tips
+  {
+    id: "wl_1",
+    category: "weight_loss",
+    text: "Drink a glass of water before every meal. It helps you feel fuller and eat less.",
+  },
+  {
+    id: "wl_2",
+    category: "weight_loss",
+    text: "High oily food intake yesterday! Try incorporating more lean proteins and vegetables today.",
+    condition: (log) => log && log.oilyFoodPercent > 40,
+  },
+  {
+    id: "wl_3",
+    category: "weight_loss",
+    text: "You had sugar yesterday. To manage cravings, try snacking on fruits like berries or an apple.",
+    condition: (log) => log && log.sugarTaken,
+  },
+  {
+    id: "wl_4",
+    category: "weight_loss",
+    text: "Great job on your steps! Physical activity is key to sustainable weight loss.",
+    condition: (log) => log && log.steps > 10000,
+  },
+  {
+    id: "wl_5",
+    category: "weight_loss",
+    text: "Don't forget to include fiber-rich foods like oats, beans, and broccoli in your diet.",
+  },
+  {
+    id: "wl_6",
+    category: "weight_loss",
+    text: "Try to get 7-8 hours of quality sleep. Poor sleep can affect hormones that regulate appetite.",
+  },
+  {
+    id: "wl_7",
+    category: "weight_loss",
+    text: "Avoid sugary drinks like sodas and juices. Opt for water, herbal tea, or black coffee.",
+  },
+  {
+    id: "wl_8",
+    category: "weight_loss",
+    text: "Practice mindful eating. Pay attention to your food and how you feel while eating.",
+  },
+  {
+    id: "wl_9",
+    category: "weight_loss",
+    text: "Low step count yesterday. Try to schedule a short walk today, even 15 minutes helps!",
+    condition: (log) => log && log.steps < 5000,
+  },
+  {
+    id: "wl_10",
+    category: "weight_loss",
+    text: "Meal prepping can help you make healthier choices throughout the week.",
+  },
 
-export interface UserProfile {
-    goal: UserGoal;
-    targetWeight: number;
-    currentWeight: number;
-    [key: string]: any;
-}
-
-const weightLossTips = [
-    "Swap sugary drinks for water or herbal tea to cut down on empty calories.",
-    "Aim for at least 30 minutes of moderate exercise, like brisk walking, most days of the week.",
-    "Fill half your plate with vegetables to increase fiber and nutrient intake, which helps you feel full.",
-    "If you had a high percentage of oily food, try grilling, baking, or steaming your food instead of frying.",
-    "Struggling with sugar cravings after a 'sugarTaken' day? Try eating a piece of fruit instead.",
-    "Incorporate more lean protein like chicken, fish, or legumes to keep you full and support muscle.",
-    "Mindful eating: pay attention to your food and hunger cues to avoid overeating.",
-    "Get 7-9 hours of quality sleep per night; poor sleep can disrupt hunger hormones.",
-    "Don't skip breakfast. A protein-rich breakfast can reduce cravings later in the day.",
-    "Watch your portion sizes. Use smaller plates to help control how much you eat.",
-    "Limit processed foods, which are often high in calories, unhealthy fats, and sugar.",
-    "Increase your daily steps. Even small walks add up and contribute to your calorie burn.",
-    "Drink a glass of water before meals to help you feel fuller and eat less.",
-    "Plan your meals for the week to make healthier choices and avoid impulse eating.",
-    "Find a workout buddy or join a class to stay motivated and accountable."
+  // Weight Gain Tips
+  {
+    id: "wg_1",
+    category: "weight_gain",
+    text: "Incorporate nutrient-dense snacks like nuts, seeds, and avocados into your day.",
+  },
+  {
+    id: "wg_2",
+    category: "weight_gain",
+    text: "Consider adding a protein shake or smoothie to your daily routine, especially after workouts.",
+  },
+  {
+    id: "wg_3",
+    category: "weight_gain",
+    text: "Eat more frequently. Aim for 5-6 smaller, nutrient-rich meals throughout the day.",
+  },
+  {
+    id: "wg_4",
+    category: "weight_gain",
+    text: "Don't fill up on water before meals. Drink most of your fluids between meals.",
+  },
+  {
+    id: "wg_5",
+    category: "weight_gain",
+    text: "Add healthy fats to your meals, such as olive oil, nut butters, and fatty fish.",
+  },
+  {
+    id: "wg_6",
+    category: "weight_gain",
+    text: "Focus on strength training exercises to build muscle mass along with weight.",
+  },
+  {
+    id: "wg_7",
+    category: "weight_gain",
+    text: "Choose full-fat dairy products over low-fat or fat-free options.",
+  },
+  {
+    id: "wg_8",
+    category: "weight_gain",
+    text: "Make sure you're eating enough protein. Aim for 1.5-2.2 grams of protein per kilogram of body weight.",
+  },
+  {
+    id: "wg_9",
+    category: "weight_gain",
+    text: "Get enough rest. Your muscles need time to recover and grow after workouts.",
+  },
+  {
+    id: "wg_10",
+    category: "weight_gain",
+    text: "Consider a healthy dessert. A bowl of yogurt with fruit or a handful of dark chocolate can add extra calories.",
+  },
 ];
 
-const weightGainTips = [
-    "Incorporate nutrient-dense snacks like nuts, seeds, and avocados into your diet.",
-    "Add healthy fats to your meals, such as olive oil, nuts, and fatty fish.",
-    "Eat more frequent, smaller meals throughout the day if you struggle with a low appetite.",
-    "Focus on strength training exercises to build muscle mass, which contributes to healthy weight gain.",
-    "Increase your protein intake with sources like eggs, dairy, and lean meats.",
-    "Don't fill up on water before meals. Drink fluids after or between meals.",
-    "Add calorie-rich toppings to your meals, like cheese, nuts, or seeds.",
-    "Choose full-fat dairy products like whole milk and full-fat yogurt.",
-    "Make a high-calorie smoothie with protein powder, fruits, and a healthy fat source like almond butter.",
-    "Ensure you are eating enough carbohydrates for energy, like whole grains, potatoes, and rice.",
-    "Even with a goal of weight gain, it's important to choose healthy fats. If you logged high oily food, focus on unsaturated fats.",
-    "Get enough rest. Your muscles need time to recover and grow after workouts.",
-    "Eat a bedtime snack, like a bowl of yogurt or a handful of almonds.",
-    "Don't be afraid of carbs. They are your body's primary energy source.",
-    "Be consistent with your eating and exercise routine for the best results."
-];
+export const getDailyTip = (
+  goal: "weight_loss" | "weight_gain",
+  latestLog: any | null
+): Tip => {
+  const relevantTips = tips.filter((tip) => tip.category === goal);
 
-export const getDailyTip = (userProfile: UserProfile | null, latestLog: DailyLog | null): string => {
-    const goal = userProfile?.goal || "weight_loss";
-    const tips = goal === "weight_loss" ? weightLossTips : weightGainTips;
-
-    if (latestLog) {
-        if (latestLog.oilyFoodPercent > 40) {
-            const specificTip = tips.find(tip => tip.includes("oily food") || tip.includes("healthy fats"));
-            if (specificTip) return specificTip;
-        }
-        if (latestLog.sugarTaken) {
-            const specificTip = tips.find(tip => tip.includes("sugar"));
-            if (specificTip) return specificTip;
-        }
+  // Find a conditional tip that matches the latest log
+  if (latestLog) {
+    const conditionalTip = relevantTips.find(
+      (tip) => tip.condition && tip.condition(latestLog)
+    );
+    if (conditionalTip) {
+      return conditionalTip;
     }
-    
-    // Fallback to a random tip
-    return tips[new Date().getDate() % tips.length];
+  }
+
+  // Fallback to a random non-conditional tip from the relevant category
+  const nonConditionalTips = relevantTips.filter((tip) => !tip.condition);
+  const randomIndex = Math.floor(Math.random() * nonConditionalTips.length);
+  return nonConditionalTips[randomIndex];
 };

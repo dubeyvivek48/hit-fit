@@ -1,30 +1,47 @@
-import { NavLink } from 'react-router-dom';
-import { Home, PlusSquare, BarChart2, Settings } from 'lucide-react';
+import { NavLink } from "react-router-dom";
+import { Home, PlusSquare, BarChart2, Settings } from "lucide-react";
 
 const BottomNav = () => {
-  const navItems = [
-    { to: '/', icon: <Home size={24} />, label: 'Home' },
-    { to: '/add', icon: <PlusSquare size={24} />, label: 'Add' },
-    { to: '/analytics', icon: <BarChart2 size={24} />, label: 'Analytics' },
-    { to: '/settings', icon: <Settings size={24} />, label: 'Settings' },
-  ];
+  const activeLinkStyle = {
+    color: "#2563EB", // blue-600
+  };
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center h-16">
-      {navItems.map((item) => (
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg md:hidden">
+      <div className="flex justify-around items-center h-16">
         <NavLink
-          key={item.label}
-          to={item.to}
-          className={({ isActive }) =>
-            `flex flex-col items-center justify-center w-full h-full text-sm font-medium ${
-              isActive ? 'text-blue-600' : 'text-gray-500'
-            }`
-          }
+          to="/"
+          className="flex flex-col items-center text-gray-600 hover:text-blue-600"
+          style={({ isActive }) => (isActive ? activeLinkStyle : {})}
         >
-          {item.icon}
-          <span className="mt-1">{item.label}</span>
+          <Home size={24} />
+          <span className="text-xs">Home</span>
         </NavLink>
-      ))}
+        <NavLink
+          to="/add-entry"
+          className="flex flex-col items-center text-gray-600 hover:text-blue-600"
+          style={({ isActive }) => (isActive ? activeLinkStyle : {})}
+        >
+          <PlusSquare size={24} />
+          <span className="text-xs">Add Log</span>
+        </NavLink>
+        <NavLink
+          to="/analytics"
+          className="flex flex-col items-center text-gray-600 hover:text-blue-600"
+          style={({ isActive }) => (isActive ? activeLinkStyle : {})}
+        >
+          <BarChart2 size={24} />
+          <span className="text-xs">Analytics</span>
+        </NavLink>
+        <NavLink
+          to="/settings"
+          className="flex flex-col items-center text-gray-600 hover:text-blue-600"
+          style={({ isActive }) => (isActive ? activeLinkStyle : {})}
+        >
+          <Settings size={24} />
+          <span className="text-xs">Settings</span>
+        </NavLink>
+      </div>
     </nav>
   );
 };

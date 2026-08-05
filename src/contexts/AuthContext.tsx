@@ -1,83 +1,88 @@
-import { createContext, useState, useEffect, ReactNode } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth, db, googleProvider, signInWithPopup } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { UserProfile } from '@/lib/tips';
+import {
+  createContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useContext,
+} from "react";
+import { auth, db } from "../lib/firebase";
+import {
+  User,
+  onAuthStateChanged,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+} from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  userProfile: UserProfile | null;
-  signIn: () => Promise<void>;
-  signOut: () => Promise<void>;
-  reloadUserProfile: () => Promise<void>;
+  login: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setLoading(true);
       if (user) {
-        setUser(user);
-        await fetchUserProfile(user.uid);
-      } else {
-        setUser(null);
-        setUserProfile(null);
+        // User is signed in.
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (!userDoc.exists()) {
+          // New user, create a document with default values
+          await setDoc(userDocRef, {
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            createdAt: new Date().toISOString(),
+            goal: "weight_loss", // default goal
+            targetWeight: 70, // default target
+            currentWeight: 75, // default current
+          });
+        }
       }
+      setUser(user);
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  const fetchUserProfile = async (uid: string) => {
-    const userDocRef = doc(db, 'users', uid);
-    const docSnap = await getDoc(userDocRef);
-    if (docSnap.exists()) {
-      setUserProfile(docSnap.data() as UserProfile);
-    } else {
-      // Create a default profile if it doesn't exist
-      const defaultProfile: UserProfile = {
-        goal: 'weight_loss',
-        targetWeight: 70,
-        currentWeight: 80,
-      };
-      await setDoc(userDocRef, defaultProfile);
-      setUserProfile(defaultProfile);
-    }
-  };
-  
-  const reloadUserProfile = async () => {
-    if (user) {
-        await fetchUserProfile(user.uid);
-    }
-  }
-
-  const signIn = async () => {
+  const login = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
     } catch (error) {
-      console.error("Error signing in with Google", error);
+      console.error("Error during sign-in:", error);
     }
   };
 
-  const signOut = async () => {
+  const logout = async () => {
     try {
-      await auth.signOut();
+      await signOut(auth);
     } catch (error) {
-      console.error("Error signing out", error);
+      console.error("Error during sign-out:", error);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, userProfile, signIn, signOut, reloadUserProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 };
