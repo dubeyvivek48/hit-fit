@@ -1,6 +1,6 @@
 import { useAuth } from "../../contexts/AuthContext";
 import { Navigate } from "react-router-dom";
-import { Google } from "lucide-react";
+import { Chrome as Google } from "lucide-react";
 
 const Login = () => {
   const { user, login } = useAuth();
